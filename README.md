@@ -68,3 +68,14 @@ Result:
   }
 }
 ```
+
+# Usage
+On JavaScript, the usage is as follows:
+```javascript
+const qson = QSON.parse(query);
+console.log(
+  qson.filter(jsonObj)
+);
+```
+
+The result will be in the form of a JavaScript object or array

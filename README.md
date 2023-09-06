@@ -72,7 +72,7 @@ Result:
 # Usage
 On JavaScript, the usage is as follows:
 ```javascript
-const qson = QSON.parse(query);
+const qson = new QSON(query);
 console.log(
   qson.filter(jsonObj)
 );

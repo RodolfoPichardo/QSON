@@ -1,110 +1,8 @@
-class Buffer {
-  constructor() {
-    this.success = true;
-    this.error = null;
-    this.indent_level = 0;
-    this.line_number = 0;
-    this.position = 0;
-    this.basic_size = 0;
-    this.emptyResponse();
-    this.last_modified = {
-      punctuation: -1,
-      attr: -1,
-      string: -1,
-      number: -1,
-      literal: -1
-    }
-  }
-
-  add(text, target) {
-    if(this.last_modified[target] !== this.line_number) {
-      this.response[target] += '\t'.repeat(this.indent_level) + ' '.repeat(this.position);
-      this.last_modified[target] = this.line_number;
-    }
-    if(this.last_modified.code !== this.line_number) { // New line detected
-      this.response.code += '\t'.repeat(this.indent_level);
-      this.last_modified.code = this.line_number;
-    }
-    if(target !== 'punctuation' && this.last_modified.punctuation === this.line_number) {
-      this.response.punctuation += ' '.repeat(text.length);
-    }
-
-    this.response[target] += text;
-    this.response.code += text;
-    this.position += text.length;
-    this.basic_size += text.length;
-  }
-
-  addNewLine(text, target, indent=false) {
-    this.add(text, target);
-    if(indent) this.indent_level++;
-    this._addNewLine();
-  }
-
-  addNewLineBefore(text, target) {
-    this.indent_level--;
-    this._addNewLine();
-    this.add(text, target);
-  }
-
-  _addNewLine() {
-    this.line_number++;
-    for(const prop in this.response) {
-      this.response[prop] += '\n';
-    }
-    this.position = 0;
-  }
-
-  flush() {
-    this.sendBuffer();
-    this.emptyResponse();
-    this.basic_size = 0;
-  }
-
-  isFull() {
-    return this.basic_size > 4096;
-  }
-
-  addError(position, expecting, actual) {
-    this.success = false;
-    this.error = {
-      position: this.position + this.indent_level * 4,
-      expected: expecting,
-      actual: actual.replaceAll('\n', '')
-    }
-
-    throw Error(`Error parsing JSON at position ${position}, expecting: "${expecting}", actual: "${actual}"`)
-  }
-
-  sendBuffer() {
-    postMessage({
-      success: this.success,
-      lines: this.line_number + 1,
-      data: this.response,
-      error: this.error
-    });
-  }
-
-  emptyResponse() {
-    this.response = {
-      punctuation: '',
-      attr: '',
-      string: '',
-      number: '',
-      literal: '',
-      code: '',
-    };
-  }
-}
-
-
-
-
 class JSONParser {
-  constructor(str) {
+  constructor(str, output) {
     this.jsonText = str;
     this.index = 0;
-    this.buffer = new Buffer();
+    this.output = output;
   }
 
   run() {
@@ -112,17 +10,17 @@ class JSONParser {
     
     switch(this.jsonText.charAt(this.index)) {
       case '{':
-        this.buffer.addNewLine('{', 'punctuation', true);
+        this.output.beginObject();//.addNewLine('{', 'punctuation', true);
         this.index++;
         this.handleObject();
         break;
       case '[':
-        this.buffer.addNewLine('[', 'punctuation', true); // FIXME don't add new line
+        this.output.beginArray(); //('[', 'punctuation', true); // FIXME don't add new line
         this.index++;
         this.handleArray();
         break;
       default:
-        this.buffer.addError(this.index, 
+        this.output.addError(this.index, 
             "Start of array (square bracket) or start of object (curly bracket)",
             this.jsonText.substring(this.index, this.index + 16)
         );
@@ -143,12 +41,12 @@ class JSONParser {
         if(char === '}') {
 
         } else if(char !== ',') {
-          this.buffer.addError(this.index, 
+          this.output.addError(this.index, 
             "Value separator (comma)",
             his.jsonText.substring(this.index, this.index + 16)
           );
         } else {
-          this.buffer.addNewLine(',', 'punctuation');
+          this.output.valueSeparator(); //.addNewLine(',', 'punctuation');
           this.index++;
           this.handleWhitespaces();
           char = this.jsonText.charAt(this.index);
@@ -161,25 +59,25 @@ class JSONParser {
         this.handleKey(); // FIXME return keylength
         this.handleWhitespaces();
         if(this.jsonText.charAt(this.index) !== ':') {
-          this.buffer.addError(this.index, 
+          this.output.addError(this.index, 
             "Member separator (colon)",
             '<b>' + this.jsonText.charAt(this.index)  + '</b>' + this.jsonText.substring(this.index + 1, this.index + 16)
           );
         }
         
-        this.buffer.add(': ', 'punctuation');
+        this.output.nameSeparator(); //.add(': ', 'punctuation');
         this.index++;
         this.handleWhitespaces();
         this.handleValue();
         expectValueSeparator = true;
         break;
       case "}": // End of object
-        this.buffer.addNewLineBefore('}', 'punctuation');
+        this.output.endObject(); //.addNewLineBefore('}', 'punctuation');
         this.index++;
         this.sendBufferIfFull();
         return;
       default:
-        this.buffer.addError(this.index, "New member or end of object", this.jsonText.substring(this.index, this.index + 16)) 
+        this.output.addError(this.index, "New member or end of object", this.jsonText.substring(this.index, this.index + 16)) 
       }
     }
   }
@@ -195,18 +93,18 @@ handleArray() {
   for(; this.index < this.jsonText.length;){// i++) {
     const char = this.jsonText.charAt(this.index);
     if(char === ']') {
-      this.buffer.addNewLineBefore(']', 'punctuation');
+      this.output.endArray(); //.addNewLineBefore(']', 'punctuation');
       this.sendBufferIfFull();
       this.index++;
       return;
     }
     if(expectValueSeparator) {
       if(char === ',') {
-        this.buffer.addNewLine(',', 'punctuation');
+        this.output.valueSeparator(); //.addNewLine(',', 'punctuation');
         this.index++;
         this.handleWhitespaces();
       } else {
-        this.buffer.addError(this.index, "Value separator (comma)", this.jsonText.substring(this.index, this.index + 16));
+        this.output.addError(this.index, "Value separator (comma)", this.jsonText.substring(this.index, this.index + 16));
       } 
     }
     this.handleValue();
@@ -214,7 +112,7 @@ handleArray() {
     expectValueSeparator = true;
   }
 
-  this.buffer.addError(this.index, "End of array", "End of file")
+  this.output.addError(this.index, "End of array", "End of file")
 }
 
   handleWhitespaces() {
@@ -244,12 +142,12 @@ handleArray() {
       this.handleKeyword();
       break
     case '{':
-      this.buffer.addNewLine('{', 'punctuation', true);
+      this.output.beginObject(); //.addNewLine('{', 'punctuation', true);
       this.index++;
       this.handleObject();
       break;
     case '[':
-      this.buffer.addNewLine('[', 'punctuation', true);
+      this.output.beginArray(); //buffer.addNewLine('[', 'punctuation', true);
       this.index++;
       this.handleArray();
       break;
@@ -268,10 +166,10 @@ handleArray() {
       break;
     case '"':
       this.index++;
-      this.handleString();
+      this.handleString(this.output.string);
       break;
     default:
-      this.buffer.addError(this.index, "Any Value", this.jsonText.substring(this.index, this.index + 16));
+      this.output.addError(this.index, "Any Value", this.jsonText.substring(this.index, this.index + 16));
     }
   }
 
@@ -288,17 +186,17 @@ handleArray() {
       word = 'null';
       break;
     default:
-      this.buffer.addError(this.index, "Keyword (true, false, or null)", this.jsonText.substring(this.index, this.index + 16))
+      this.output.addError(this.index, "Keyword (true, false, or null)", this.jsonText.substring(this.index, this.index + 16))
     }
 
     for(let i = 1; i < word.length; i++) {
       if(word.charAt(i) !== this.jsonText.charAt(i + this.index)) {
-        this.buffer.addError(this.index, `Keyword ${word}`, this.jsonText.substring(this.index, this.index + 16))
+        this.output.addError(this.index, `Keyword ${word}`, this.jsonText.substring(this.index, this.index + 16))
         break;
       }
     }
 
-    this.buffer.add(word, 'literal');
+    this.output.literal(word); //.add(word, 'literal');
 
     this.index += word.length;
   }
@@ -342,7 +240,7 @@ handleArray() {
         number += char + sign;
         this.index++;
       } else {
-        this.buffer.addError(this.index, 
+        this.output.addError(this.index, 
             "Sign (negative or positive)",
             '<b>' + number  + '</b>' + this.jsonText.substring(this.index, this.index + 16)
           );
@@ -351,7 +249,7 @@ handleArray() {
       number += this.handleOneStarDigits();
     }
 
-    this.buffer.add(number, 'number');
+    this.output.number(number);
   }
 
   /**
@@ -391,7 +289,7 @@ handleArray() {
           break;
         default:
           if(digits === '') {
-            this.buffer.addError(this.index, "Digit (0-9)", `${digit}<b>${char}</b>` + this.jsonText.substring(this.index + 1, this.index + 16))
+            this.output.addError(this.index, "Digit (0-9)", `${digit}<b>${char}</b>` + this.jsonText.substring(this.index + 1, this.index + 16))
           } else {
             return digits;
           }
@@ -402,7 +300,7 @@ handleArray() {
 
 
   handleKey() {
-    this.handleString('attr');
+    this.handleString(this.output.attr);
   }
 
   /**
@@ -410,7 +308,7 @@ handleArray() {
    * string = quotation-mark *char quotation-mark
    * 
    */
-  handleString(className="string") {
+  handleString(callback) {
     let escaped = false;
     let str = '';
     for(; this.index < this.jsonText.length; this.index++) {
@@ -419,7 +317,7 @@ handleArray() {
       if(escaped || char != '"') {
         str += char !== '\\'? char: char+char;
       } else {
-        this.buffer.add('"' + str + '"', className);
+        callback('"' + str + '"');
         this.index++;
         return;
       }
@@ -427,21 +325,12 @@ handleArray() {
       escaped = !escaped && char === '\\';
     }
 
-    this.buffer.addNewLine('"' + str, className);
-    this.buffer.addError(this.index, "End of string", "End of file");
+    callback('"' + str, className);
+    this.output.addError(this.index, "End of string", "End of file");
   }
 
 
-  /* Helper functions */
-  sendBufferIfFull() {
-    if(this.buffer.isFull()) {
-      this.sendBuffer();
-    }
-  }
-
-  sendBuffer() {
-    this.buffer.flush();
-  }
+  
 
   error(str) {
     throw new Error(str);

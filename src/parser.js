@@ -10,12 +10,12 @@ class JSONParser {
     
     switch(this.jsonText.charAt(this.index)) {
       case '{':
-        this.output.beginObject();//.addNewLine('{', 'punctuation', true);
+        this.output.beginObject();
         this.index++;
         this.handleObject();
         break;
       case '[':
-        this.output.beginArray(); //('[', 'punctuation', true); // FIXME don't add new line
+        this.output.beginArray();
         this.index++;
         this.handleArray();
         break;
@@ -33,7 +33,7 @@ class JSONParser {
     this.handleWhitespaces();
 
     let expectValueSeparator = false;
-    for(; this.index < this.jsonText.length;) {// i++) {
+    for(; this.index < this.jsonText.length;) {
       this.handleWhitespaces();
       let char = this.jsonText.charAt(this.index);
       if(expectValueSeparator) {
@@ -46,7 +46,7 @@ class JSONParser {
             his.jsonText.substring(this.index, this.index + 16)
           );
         } else {
-          this.output.valueSeparator(); //.addNewLine(',', 'punctuation');
+          this.output.valueSeparator();
           this.index++;
           this.handleWhitespaces();
           char = this.jsonText.charAt(this.index);
@@ -56,7 +56,7 @@ class JSONParser {
       switch(char) {
       case '"': // New key value
         this.index++;
-        this.handleKey(); // FIXME return keylength
+        this.handleKey();
         this.handleWhitespaces();
         if(this.jsonText.charAt(this.index) !== ':') {
           this.output.addError(this.index, 
@@ -65,14 +65,14 @@ class JSONParser {
           );
         }
         
-        this.output.nameSeparator(); //.add(': ', 'punctuation');
+        this.output.nameSeparator();
         this.index++;
         this.handleWhitespaces();
         this.handleValue();
         expectValueSeparator = true;
         break;
       case "}": // End of object
-        this.output.endObject(); //.addNewLineBefore('}', 'punctuation');
+        this.output.endObject();
         this.index++;
         this.sendBufferIfFull();
         return;
@@ -90,17 +90,17 @@ handleArray() {
   this.handleWhitespaces();
 
   let expectValueSeparator = false;
-  for(; this.index < this.jsonText.length;){// i++) {
+  for(; this.index < this.jsonText.length;){
     const char = this.jsonText.charAt(this.index);
     if(char === ']') {
-      this.output.endArray(); //.addNewLineBefore(']', 'punctuation');
+      this.output.endArray();
       this.sendBufferIfFull();
       this.index++;
       return;
     }
     if(expectValueSeparator) {
       if(char === ',') {
-        this.output.valueSeparator(); //.addNewLine(',', 'punctuation');
+        this.output.valueSeparator();
         this.index++;
         this.handleWhitespaces();
       } else {
@@ -142,12 +142,12 @@ handleArray() {
       this.handleKeyword();
       break
     case '{':
-      this.output.beginObject(); //.addNewLine('{', 'punctuation', true);
+      this.output.beginObject();
       this.index++;
       this.handleObject();
       break;
     case '[':
-      this.output.beginArray(); //buffer.addNewLine('[', 'punctuation', true);
+      this.output.beginArray();
       this.index++;
       this.handleArray();
       break;
@@ -196,7 +196,7 @@ handleArray() {
       }
     }
 
-    this.output.literal(word); //.add(word, 'literal');
+    this.output.literal(word);
 
     this.index += word.length;
   }
@@ -232,7 +232,6 @@ handleArray() {
     }
 
     // exp
-    // TODO separate it into helper function
     const char = this.jsonText.charAt(this.index);
     if(char === 'e' || char === 'E') {
       const sign = this.jsonText.charAt(++this.index);

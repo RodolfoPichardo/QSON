@@ -357,3 +357,5 @@ handleArray() {
   }
 
 }
+
+module.exports = JSONParser;

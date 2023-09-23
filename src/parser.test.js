@@ -17,16 +17,23 @@ class MockOutput {
 		});
 	}
 
+	endObject() {
+		this.token.push({
+			'type': 'endObject'
+		});
+	}
+
 	beginArray() {
 		this.token.push({
 			'type': 'beginArray'
 		});
 	}
-
-	endObject() {
+	
+	endArray() {
 		this.token.push({
-			'type': 'endObject'
+			'type': 'endArray'
 		});
+
 	}
 	
 	valueSeparator() {
@@ -41,13 +48,6 @@ class MockOutput {
 		});
 	}
 
-	endArray() {
-		this.token.push({
-			'type': 'endArray'
-		});
-
-	}
-	
 	string(str) {
 		this.token.push({
 			'type': 'string',

@@ -63,7 +63,6 @@ class JSONParser {
   #handleEndObject() {
     this.output.endObject();
     this.index++;
-    this.sendBufferIfFull();
   }
 
   #handleValueSeparator() {
@@ -118,7 +117,6 @@ handleArray() {
     const char = this.jsonText.charAt(this.index);
     if(char === ']') {
       this.output.endArray();
-      this.sendBufferIfFull();
       this.index++;
       return;
     }

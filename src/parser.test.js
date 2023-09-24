@@ -2,13 +2,14 @@ const JSONParser = require('./parser');
 
 test('Build a parser', () => {
 	let output = new MockOutput();
-	let jsonParser = new JSONParser(output);
-	expect(true).toBe(true);
+	let jsonParser = new JSONParser('{}', output);
+	jsonParser.run();
+	expect(output.token).toEqual([ { type: 'beginObject' }, { type: 'endObject' } ]);
 });
 
 class MockOutput {
 	constructor() {
-		this.tokens = [];
+		this.token = [];
 	}
 
 	beginObject() {

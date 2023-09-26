@@ -1,3 +1,5 @@
+![Node.js CI](https://github.com/RodolfoPichardo/QSON/actions/workflows/node.js.yml/badge.svg)
+
 # Why QSON
 JSON is incredible, it is the most popular data exchange notation for a reason, it is simple, elegant, and lightweight; however, on large and complex datasets, it is a hassle to browse through it.
 

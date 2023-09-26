@@ -1,11 +1,33 @@
 const JSONParser = require('./parser');
 
-test('Build a parser', () => {
+test('Test Empty Object', () => {
 	let output = new MockOutput();
 	let jsonParser = new JSONParser('{}', output);
 	jsonParser.run();
 	expect(output.token).toEqual([ { type: 'beginObject' }, { type: 'endObject' } ]);
 });
+
+
+test('Test Empty Array', () => {
+	let output = new MockOutput();
+	let jsonParser = new JSONParser('[]', output);
+	jsonParser.run();
+	expect(output.token).toEqual([ { type: 'beginArray' }, { type: 'endArray' } ]);
+});
+
+test('Test Object with string', () => {
+	let output = new MockOutput();
+	let jsonParser = new JSONParser('{"abc":"def"}', output);
+	jsonParser.run();
+	expect(output.token).toEqual([
+		{ type: 'beginObject' },
+		{ type: 'attr', value: '"abc"'},
+		{ type: 'nameSeparator'},
+		{ type: 'string', value: '"def"'},
+		{ type: 'endObject' } ]);
+});
+
+
 
 class MockOutput {
 	constructor() {
@@ -74,11 +96,11 @@ class MockOutput {
 	}
 
 	attr(str) {
+		console.log(this);
 		this.token.push({
 			'type': 'attr',
 			'value': str
 		});
-
 	}
 
 	addError(str) {

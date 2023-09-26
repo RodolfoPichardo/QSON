@@ -41,7 +41,7 @@ class JSONParser {
       return;
     }
 
-    this.handleMember();
+    this.#handleMember();
 
     for(; this.index < this.jsonText.length;) {
       this.handleWhitespaces();
@@ -338,7 +338,8 @@ handleArray() {
       if(escaped || char != '"') {
         str += char !== '\\'? char: char+char;
       } else {
-        callback('"' + str + '"');
+	console.log("Output", this.output);
+        callback.call(this.output, '"' + str + '"');
         this.index++;
         return;
       }
@@ -346,7 +347,7 @@ handleArray() {
       escaped = !escaped && char === '\\';
     }
 
-    callback('"' + str, className);
+    callback.call(this.output, '"' + str, className);
     this.output.addError(this.index, "End of string", "End of file");
   }
 

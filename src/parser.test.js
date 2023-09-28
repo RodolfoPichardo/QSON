@@ -27,6 +27,30 @@ test('Test Object with string', () => {
 		{ type: 'endObject' } ]);
 });
 
+test('Test empty strings', () => {
+	let output = new MockOutput();
+	let jsonParser = new JSONParser('{"":""}', output);
+	jsonParser.run();
+	expect(output.token).toEqual([
+		{ type: 'beginObject' },
+		{ type: 'attr', value: '""'},
+		{ type: 'nameSeparator'},
+		{ type: 'string', value: '""'},
+		{ type: 'endObject' } ]);
+});
+
+test('Test strings with space characters', () => {
+	let output = new MockOutput();
+	let jsonParser = new JSONParser('{" \\t\\n\\r":" \\t\\n\\r"}', output);
+	jsonParser.run();
+	expect(output.token).toEqual([
+		{ type: 'beginObject' },
+		{ type: 'attr', value: '" \\t\\n\\r"'},
+		{ type: 'nameSeparator'},
+		{ type: 'string', value: '" \\t\\n\\r"'},
+		{ type: 'endObject' } ]);
+});
+
 
 
 class MockOutput {

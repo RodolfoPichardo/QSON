@@ -336,7 +336,7 @@ handleArray() {
       let char = this.jsonText.charAt(this.index);
       
       if(escaped || char != '"') {
-        str += char !== '\\'? char: char+char;
+        str += char;
       } else {
 	console.log("Output", this.output);
         callback.call(this.output, '"' + str + '"');

@@ -2,7 +2,8 @@ const JSONParser = require('./parser');
 
 test('Test Empty Object', () => {
 	let output = new MockOutput();
-	let jsonParser = new JSONParser('{}', output);
+	let jsonObj = {};
+	let jsonParser = new JSONParser(JSON.stringify(jsonObj), output);
 	jsonParser.run();
 	expect(output.token).toEqual([ { type: 'beginObject' }, { type: 'endObject' } ]);
 });
@@ -10,14 +11,18 @@ test('Test Empty Object', () => {
 
 test('Test Empty Array', () => {
 	let output = new MockOutput();
-	let jsonParser = new JSONParser('[]', output);
+	let jsonObj = [];
+	let jsonParser = new JSONParser(JSON.stringify(jsonObj), output);
 	jsonParser.run();
 	expect(output.token).toEqual([ { type: 'beginArray' }, { type: 'endArray' } ]);
 });
 
 test('Test Object with string', () => {
 	let output = new MockOutput();
-	let jsonParser = new JSONParser('{"abc":"def"}', output);
+	let jsonObj = {
+		"abc":"def"
+	};
+	let jsonParser = new JSONParser(JSON.stringify(jsonObj), output);
 	jsonParser.run();
 	expect(output.token).toEqual([
 		{ type: 'beginObject' },
@@ -29,7 +34,10 @@ test('Test Object with string', () => {
 
 test('Test empty strings', () => {
 	let output = new MockOutput();
-	let jsonParser = new JSONParser('{"":""}', output);
+	let jsonObj = {
+		"": ""
+	}
+	let jsonParser = new JSONParser(JSON.stringify(jsonObj), output);
 	jsonParser.run();
 	expect(output.token).toEqual([
 		{ type: 'beginObject' },
@@ -41,7 +49,11 @@ test('Test empty strings', () => {
 
 test('Test strings with space characters', () => {
 	let output = new MockOutput();
-	let jsonParser = new JSONParser('{" \\t\\n\\r":" \\t\\n\\r"}', output);
+	let jsonObj = {
+		" \t\n\r":" \t\n\r"
+	};
+
+	let jsonParser = new JSONParser(JSON.stringify(jsonObj), output);
 	jsonParser.run();
 	expect(output.token).toEqual([
 		{ type: 'beginObject' },

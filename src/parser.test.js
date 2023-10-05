@@ -63,6 +63,39 @@ test('Test strings with space characters', () => {
 		{ type: 'endObject' } ]);
 });
 
+test('Test strings with double slash', () => {
+	let output = new MockOutput();
+	let jsonObj = {
+		"\\": "\\"
+	};
+
+	let jsonParser = new JSONParser(JSON.stringify(jsonObj), output);
+	jsonParser.run();
+	expect(output.token).toEqual([
+		{ type: 'beginObject' },
+		{ type: 'attr', value: '"\\\\"'},
+		{ type: 'nameSeparator'},
+		{ type: 'string', value: '"\\\\"'},
+		{ type: 'endObject' } ]);
+});
+
+test('Test strings with double quotes', () => {
+	let output = new MockOutput();
+	let jsonObj = {
+		"\"":"\""
+	};
+
+	let jsonParser = new JSONParser(JSON.stringify(jsonObj), output);
+	jsonParser.run();
+	expect(output.token).toEqual([
+		{ type: 'beginObject' },
+		{ type: 'attr', value: '"\\""'},
+		{ type: 'nameSeparator'},
+		{ type: 'string', value: '"\\""'},
+		{ type: 'endObject' } ]);
+});
+
+
 
 
 class MockOutput {

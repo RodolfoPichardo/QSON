@@ -50,10 +50,13 @@ class JSONParser {
         return;
       }
 
-      this.#handleValueSeparator();
+      if(!this.#handleValueSeparator()) {
+        return;
+      }
       this.handleWhitespaces();
       this.#handleMember();
     }
+
   }
 
   #isEndObject() {
@@ -68,16 +71,18 @@ class JSONParser {
   #handleValueSeparator() {
     const char = this.jsonText.charAt(this.index);
     if(char !== ',') {
+
       this.output.addError(this.index, 
         "Value separator (comma)",
         this.jsonText.substring(this.index, this.index + 16)
       );
-      return;
+      return false;
     }
 
     this.output.valueSeparator();
     this.index++;
     this.handleWhitespaces();
+    return false;
   }
 
   #handleMember() {
@@ -338,7 +343,6 @@ handleArray() {
       if(escaped || char != '"') {
         str += char;
       } else {
-	console.log("Output", this.output);
         callback.call(this.output, '"' + str + '"');
         this.index++;
         return;
